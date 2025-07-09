@@ -577,6 +577,7 @@ console.log(selectedAccount)
             loadAllAccounts();
           }}
           currentUser={currentUser}
+          permissions={permissions}
         />
       )}
     </div>

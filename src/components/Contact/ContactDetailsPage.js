@@ -6,91 +6,105 @@ import EditContactForm from "../Contact/EditContactForm"
 import Meeting from '../Meeting';
 import Opportunities from '../Opportunities';
 import Reminder from '../Reminder';
+import toast, { Toaster } from "react-hot-toast";
 
-const ContactDetailsPage = ({ contact, onClose, currentUser, setActiveTabMain, userId,permissions }) => {
-  // Helper functions to safely access contact properties
+const ContactDetailsPage = ({ contact, onClose, currentUser, setActiveTabMain, userId, permissions, onContactUpdate }) => {
   const [activeTab, setActiveTab] = useState('Overview');
   const [contactId, setContactId] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
-  const [fullContact, setFullContact] = useState(null);
-console.log(contact)
-      useEffect(() => {
-      if (contact && contact.ID) {
-        setContactId(contact.ID);
-      }
-    }, [contact]);
+  const [fullContact, setFullContact] = useState(contact);
+  const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-    const fetchContactDetails = async () => {
-      if (contact && contact.ID) {
-        try {
-          const response = await ZOHO.CREATOR.DATA.getRecordById({
-            app_name: "lead-management-system",
-            report_name: "All_Contacts_Dev",
-            id: contact.ID
-          });
-          
-          if (response.code === 3000) {
-            setFullContact(response.data);
-          } else {
-            setFullContact(contact);
-          }
-        } catch (error) {
-          console.error("Failed to fetch contact details:", error);
-          setFullContact(contact);
-        }
-      }
-    };
+  const displayContact = fullContact || contact;
 
-    fetchContactDetails();
-  }, [contact]);
-
-  const getContactName = () => {
-    if (!contact) return 'Unknown';
-    if (contact.Name) {
-      if (typeof contact.Name === 'string') return contact.Name;
-      if (contact.Name.first_name || contact.Name.last_name) {
-        return `${contact.Name.first_name || ''} ${contact.Name.last_name || ''}`.trim();
-      }
-      return contact.Name.zc_display_value || 'Unknown';
+  useEffect(() => {
+    if (contact?.ID) {
+      setContactId(contact.ID);
+      fetchContactDetails(); // Fetch immediately when contact ID is available
     }
-    // Handle transformed data structure
-    return contact.name || 'Unknown';
+  }, [contact?.ID]);
+
+  const fetchContactDetails = async () => {
+    if (!contact?.ID) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await ZOHO.CREATOR.DATA.getRecordById({
+        app_name: "lead-management-system",
+        report_name: "All_Contacts_Dev",
+        id: contact.ID
+      });
+      
+      if (response.code === 3000) {
+        setFullContact(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch contact details:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateSuccess = async (updatedContact) => {
+    setFullContact(updatedContact);
+
+    await fetchContactDetails();
+    
+    if (onContactUpdate) {
+      onContactUpdate(updatedContact);
+    }
+    
+    setShowEditForm(false);
+  };
+
+  // All helper functions should use displayContact consistently
+  const getContactName = () => {
+    if (!displayContact) return 'Unknown';
+    if (displayContact.Name) {
+      if (typeof displayContact.Name === 'string') return displayContact.Name;
+      if (displayContact.Name.first_name || displayContact.Name.last_name) {
+        return `${displayContact.Name.first_name || ''} ${displayContact.Name.last_name || ''}`.trim();
+      }
+      return displayContact.Name.zc_display_value || 'Unknown';
+    }
+    return displayContact.name || 'Unknown';
   };
 
   const getAccount = () => {
-    if (!contact) return 'N/A';
-    if (typeof contact.Account_Name === 'string') return contact.Account_Name;
-    return contact.Account_Name?.zc_display_value || '';
+    if (!displayContact) return 'N/A';
+    if (typeof displayContact.Account_Name === 'string') return displayContact.Account_Name;
+    return displayContact.Account_Name?.zc_display_value || 'N/A';
   };
 
   const getEmail = () => {
-    if (!contact) return 'N/A';
-    return contact.Email || contact.email || 'N/A';
+    if (!displayContact) return 'N/A';
+    return displayContact.Email || displayContact.email || 'N/A';
   };
 
   const getPhone = () => {
-    if (!contact) return 'N/A';
-    return contact.Phone_Number2 || contact.Phone || contact.phone || 'N/A';
+    if (!displayContact) return 'N/A';
+    return displayContact.Phone_Number2 || displayContact.Phone || displayContact.phone || 'N/A';
   };
 
   const getContactOwner = () => {
-    if (!contact) return 'N/A';
-    if (typeof contact.Owner === 'string') return contact.Owner;
-    return contact.Contact_Owner?.zc_display_value || 'N/A';
+    if (!displayContact) return 'N/A';
+    if (typeof displayContact.Owner === 'string') return displayContact.Owner;
+    return displayContact.Contact_Owner?.zc_display_value || 'N/A';
   };
-if (!fullContact) return <div>Loading...</div>;
 
- const getAddressField = (field) => {
-    if (!contact || !contact.Billing_Address) return 'N/A';
-    return contact.Billing_Address[field] || 'N/A';
+  const getAddressField = (field) => {
+    if (!displayContact || !displayContact.Billing_Address) return 'N/A';
+    return displayContact.Billing_Address[field] || 'N/A';
   };
 
   if (!contact) return null;
 
   return (
+
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 overflow-y-auto">
+      <Toaster position="top-center" toastOptions={{ duration: 2000 }} />
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+
         {/* Header */}
         <div className="bg-[#f29d29] text-white p-4 rounded-t-lg ">
           <div className="flex justify-between items-center relative">
@@ -154,10 +168,10 @@ if (!fullContact) return <div>Loading...</div>;
                 Basic Information
               </h3>
               <DetailItem label="Email" value={getEmail()} />
-              <DetailItem label="Account" value={contact.Account_Name.zc_display_value || 'N/A'} />
+              <DetailItem label="Account" value={displayContact.Account_Name.zc_display_value || 'N/A'} />
               <DetailItem label="Phone" value={getPhone()} />
-              <DetailItem label="Title" value={contact.Title || contact.title || 'N/A'} />
-              <DetailItem label="Profile" value={contact.Profile.zc_display_value || 'N/A'} />
+              <DetailItem label="Title" value={displayContact.Title || displayContact.title || 'N/A'} />
+              <DetailItem label="Profile" value={displayContact.Profile.zc_display_value || 'N/A'} />
             </div>
 
             {/* Contact Details */}
@@ -165,14 +179,14 @@ if (!fullContact) return <div>Loading...</div>;
               <h3 className="text-lg font-medium text-[#f29d29] border-b border-[#f29d29] pb-1">
                 Contact Details
               </h3>
-              <DetailItem label="Department" value={contact.Department || 'N/A'} />
+              <DetailItem label="Department" value={displayContact.Department || 'N/A'} />
               <DetailItem label="Contact Owner" value={getContactOwner()} />
-               <DetailItem label="Contact Source" value={contact.Contact_Source?.zc_display_value || 'N/A'} />
+               <DetailItem label="Contact Source" value={displayContact.Contact_Source?.zc_display_value || 'N/A'} />
               <DetailItem 
                 label="Created Date" 
                 value={
                   contact.Created_Time || contact.Added_Time
-                    ? new Date(contact.Created_Time || contact.Added_Time).toLocaleString() 
+                    ? new Date(displayContact.Created_Time || displayContact.Added_Time).toLocaleString() 
                     : 'N/A'
                 } 
               />
@@ -222,8 +236,9 @@ if (!fullContact) return <div>Loading...</div>;
       </div>
       {showEditForm && (
       <EditContactForm 
-        contact={contact} 
+        contact={fullContact} 
         onClose={() => setShowEditForm(false)}
+        onUpdateSuccess={handleUpdateSuccess}
         userId={userId}
         permissions={permissions}
         currentUser={currentUser}

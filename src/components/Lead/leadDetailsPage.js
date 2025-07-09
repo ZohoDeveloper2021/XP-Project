@@ -39,7 +39,6 @@ console.log("lead Details > ", lead)
           });
         }
         setShowEditForm(false);
-        // toast.success('Lead updated successfully!');
       };
 
   // Helper functions
@@ -226,7 +225,7 @@ if (!lead) return null;
                 <h3 className="text-lg font-medium text-[#f29d29] border-b border-[#f29d29] pb-1">
                   Additional Information
                 </h3>
-                <DetailItem label="Industry" value={lead.Industry.Profile_Name || 'N/A'} />
+                <DetailItem label="Industry" value={lead.Industry.Profile_Name || lead.Industry.zc_display_value || 'N/A'} />
                 <DetailItem label="Lead Owner" value={getLeadOwner()} />
                 <DetailItem
                   label="Created Date"

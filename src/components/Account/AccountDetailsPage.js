@@ -139,6 +139,7 @@ console.log("MM ",account)
               </h3>
               <DetailItem label="Industry" value={account.Industry?.zc_display_value || account.industry || 'N/A'} />
               <DetailItem label="Employees" value={account.Employees || account.employees || 'N/A'} />
+              <DetailItem label="Contact" value={account.Contacts.zc_display_value || account.employees || 'N/A'} />
               
             </div>
 

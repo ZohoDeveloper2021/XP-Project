@@ -100,7 +100,9 @@ const Contacts = () => {
       throw error;
     }
   }, [currentUser, isTeamLead]);
-
+const handleContactUpdate = (updatedContact) => {
+  setContacts(contacts.map(c => c.ID === updatedContact.ID ? updatedContact : c));
+};
   const loadAllContacts = useCallback(async () => {
     if (!currentUser) return;
     
@@ -649,6 +651,7 @@ console.log(displayedContacts)
           setActiveTabMain={setActiveTab}
           userId={userId}
           permissions={permissions}
+          onContactUpdate={handleContactUpdate}
         />
       )}
     </div>

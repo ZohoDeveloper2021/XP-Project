@@ -405,7 +405,7 @@ const EditAccountForm = ({ account, onClose, onUpdateSuccess }) => {
           </div>
 
           {/* Existing Attachments */}
-          {existingAttachments.length > 0 && (
+          {/* {existingAttachments.length > 0 && (
             <div className="bg-gray-50 p-2 rounded md:col-span-2">
               <label className="block text-xs font-medium text-gray-700 mb-1">Existing Attachments</label>
               <div className="space-y-2">
@@ -442,7 +442,7 @@ const EditAccountForm = ({ account, onClose, onUpdateSuccess }) => {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* New Attachments */}
           <div className="bg-gray-50 p-2 rounded md:col-span-2">
