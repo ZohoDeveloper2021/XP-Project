@@ -24,7 +24,6 @@ const AllMeeting = (RecordId) => {
   const [existingRemarkId, setExistingRemarkId] = useState(null);
   const [hasFetched, setHasFetched] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false); // New state for update loading
-  
 
   const fetchMeetings = async () => {
     try {
