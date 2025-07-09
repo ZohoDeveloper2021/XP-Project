@@ -678,74 +678,6 @@ const handleCloseDealSubmit = async () => {
   }
 };
 
-//   const handleMandatoryFieldsSubmit = async () => {
-//   // Validate fields
-//   const errors = {};
-//   if (!mandatoryFields.Hourly_Rate) errors.Hourly_Rate = 'Hourly Rate is required';
-//   if (!mandatoryFields.Hours) errors.Hours = 'Hours is required';
-//   if (!mandatoryFields.Project_Start_Date) errors.Project_Start_Date = 'Project Start Date is required';
-//   if (!mandatoryFields.Project_Close_Date) errors.Project_Close_Date = 'Project Close Date is required';
-  
-//   if (Object.keys(errors).length > 0) {
-//     setValidationErrors(errors);
-//     return;
-//   }
-
-//   try {
-//     // Format dates to dd-MMM-yyyy
-//     const formatDate = (dateString) => {
-//       const date = new Date(dateString);
-//       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-//       const day = date.getDate().toString().padStart(2, '0');
-//       const month = months[date.getMonth()];
-//       const year = date.getFullYear();
-//       return `${day}-${month}-${year}`;
-//     };
-
-//     const targetStage = deal.pendingStage || deal.Stage;
-    
-//     const formattedFields = {
-//       ...mandatoryFields,
-//       Project_Start_Date: formatDate(mandatoryFields.Project_Start_Date),
-//       Project_Close_Date: formatDate(mandatoryFields.Project_Close_Date),
-//       Stage: targetStage
-//     };
-
-//     const updateConfig = {
-//       app_name: 'lead-management-system',
-//       report_name: 'All_Opportunities_Dev',
-//       id: deal.ID,
-//       payload: {
-//         data: formattedFields
-//       }
-//     };
-
-//     await ZOHO.CREATOR.DATA.updateRecordById(updateConfig);
-
-//     // Then create stage history
-//     await addGenericStageHistoryRecord(deal.ID, targetStage, userId);
-    
-//     const updatedDeal = {
-//       ...deal,
-//       ...formattedFields,
-//       Stage: targetStage,
-//       pendingStage: undefined
-//     };
-    
-//     setDeal(updatedDeal);
-//     setShowMandatoryFieldsPopup(false);
-//     setValidationErrors({});
-//     setMandatoryFields({
-//       Hourly_Rate: '',
-//       Hours: '',
-//       Project_Start_Date: '',
-//       Project_Close_Date: ''
-//     });
-//     await fetchStageHistory(deal.ID);
-//   } catch (error) {
-//     console.error('Error updating mandatory fields:', error);
-//   }
-// };
 
 const handleUpdateSuccess = (updatedData) => {
   // Update the deal state with the new data
@@ -1210,7 +1142,7 @@ console.log(deal)
                   </h3>
                   
                   {/* Project Type */}
-                  <DetailItem label="Project Type" value={deal.Project_Type || 'N/A'} />
+                  {/* <DetailItem label="Project Type" value={deal.Project_Type || 'N/A'} /> */}
 
                   {/* Conditional fields based on project type */}
                   {deal.Project_Type === 'Fixed Project' && (

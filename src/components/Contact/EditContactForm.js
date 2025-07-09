@@ -216,69 +216,76 @@ const EditContactForm = ({
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!contact || !contact.ID) return;
+  e.preventDefault();
+  if (!contact || !contact.ID) return;
 
-    setIsSubmitting(true);
-    setSubmitError(null);
+  setIsSubmitting(true);
+  setSubmitError(null);
 
-    try {
-      const config = {
-        app_name: "lead-management-system",
-        report_name: "All_Contacts_Dev",
-        id: contact.ID,
-        payload: {
-          data: {
-            Name: `${formData.firstName} ${formData.lastName}`.trim(),
-            Email: formData.email || "",
-            Phone_Number2: formData.phone || "",
-            Account_Name: formData.account || "",
-            Title: formData.title || "",
-            Department: formData.department || "",
-            Billing_Address: {
-              address_line_1: formData.address_line_1 || "",
-              address_line_2: formData.address_line_2 || "",
-              district_city: formData.district_city || "",
-              postal_code: formData.postal_code || "",
-              state_province: formData.state_province || "",
-              country: formData.country || "",
-            },
-            Contact_Source: formData.contactSource || "",
-            Contact_Owner: userId,
-            Profile: formData.profile || "",
+  try {
+    const config = {
+      app_name: "lead-management-system",
+      report_name: "All_Contacts_Dev",
+      id: contact.ID,
+      payload: {
+        data: {
+          Name: `${formData.firstName} ${formData.lastName}`.trim(),
+          Email: formData.email || "",
+          Phone_Number2: formData.phone || "",
+          Account_Name: formData.account || "",
+          Title: formData.title || "",
+          Department: formData.department || "",
+          Billing_Address: {
+            address_line_1: formData.address_line_1 || "",
+            address_line_2: formData.address_line_2 || "",
+            district_city: formData.district_city || "",
+            postal_code: formData.postal_code || "",
+            state_province: formData.state_province || "",
+            country: formData.country || "",
           },
+          Contact_Source: formData.contactSource || "",
+          Contact_Owner: userId,
+          Profile: formData.profile || "",
         },
+      },
+    };
+
+    const response = await ZOHO.CREATOR.DATA.updateRecordById(config);
+
+    if (response.code === 3000) {
+      // Upload attachments if any
+      if (selectedFiles.length > 0) {
+        await uploadAttachments(contact.ID);
+      }
+      
+      // Prepare the updated contact data to pass back
+      const updatedContact = {
+        ...contact,
+        ...config.payload.data,
+        // Include related record display values
+        Contact_Source: sources.find(s => s.ID === formData.contactSource) || contact.Contact_Source,
+        Profile: profiles.find(p => p.ID === formData.profile) || contact.Profile,
+        Account_Name: accounts.find(a => a.ID === formData.account) || contact.Account_Name
       };
 
-      const response = await ZOHO.CREATOR.DATA.updateRecordById(config);
-
-      if (response.code === 3000) {
-        // Upload attachments if any
-        if (selectedFiles.length > 0) {
-          await uploadAttachments(contact.ID);
-        }
-        fetchSource();
-        fetchAccount();
-        fetchProfiles();
-        toast.success("Contact updated successfully! ");
-
-        if (onUpdateSuccess) onUpdateSuccess();
-        onClose();
-      } else {
-        throw new Error(response.message || "Failed to update contact");
+      toast.success("Contact updated successfully!");
+      
+      if (onUpdateSuccess) {
+        onUpdateSuccess(updatedContact); // Pass the updated contact data back
       }
-    } catch (error) {
-      console.error("Error updating contact:", error);
-      toast.error(
-        error.message || "Failed to update contact. Please try again."
-      );
-      setSubmitError(
-        error.message || "Failed to update contact. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
+      
+      onClose();
+    } else {
+      throw new Error(response.message || "Failed to update contact");
     }
-  };
+  } catch (error) {
+    console.error("Error updating contact:", error);
+    toast.error(error.message || "Failed to update contact. Please try again.");
+    setSubmitError(error.message || "Failed to update contact. Please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <>

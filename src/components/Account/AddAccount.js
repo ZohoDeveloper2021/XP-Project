@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
-const AddAccount = ({ onClose, onAccountAdded, currentUser }) => {
+const AddAccount = ({ onClose, onAccountAdded, currentUser, permissions }) => {
   const [formData, setFormData] = useState({
     accountName: '',
     rating: '',
@@ -27,6 +27,8 @@ const AddAccount = ({ onClose, onAccountAdded, currentUser }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
 
+  const [contact, setContact] = useState([]);
+ const isTeamLead = permissions?.includes("Team Lead");
   const ratingOptions = ['Hot', 'Warm', 'Cold'];
 
   const fetchUser = async () => {
@@ -60,6 +62,29 @@ const AddAccount = ({ onClose, onAccountAdded, currentUser }) => {
       [name]: value
     }));
   };
+
+  let configContact = {
+    app_name: "lead-management-system",
+    report_name: "All_Contacts_Dev",
+    max_records: 1000,
+  };
+   if (isTeamLead === false) {
+        configContact.criteria = `Contact_Owner.Email == "${currentUser}"`;
+    }
+
+  async function fetchContact() {
+    try {
+      const response = await ZOHO.CREATOR.DATA.getRecords(configContact);
+      const records = response.data || [];
+      setContact(records);
+    } catch (error) {
+      console.error("Error fetching contact from Zoho:", error);
+      throw error;
+    }
+  }
+  useEffect(() => {
+    fetchContact();
+  }, []);
 
   let config = {
     app_name: "lead-management-system",
@@ -183,7 +208,8 @@ const AddAccount = ({ onClose, onAccountAdded, currentUser }) => {
         Employees: formData.employees,
         Industry: formData.industry,
         Account_Owner: userId,
-        Account_Source: formData.accountSource
+        Account_Source: formData.accountSource,
+        Contacts_Map: formData.contactSource,
       };
 
       const response = await ZOHO.CREATOR.DATA.addRecords({
@@ -286,6 +312,25 @@ const AddAccount = ({ onClose, onAccountAdded, currentUser }) => {
               ))}
             </select>
           </div>
+
+          <div className="bg-gray-50 p-2 rounded">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Contact
+                </label>
+                <select
+                  name="contactSource"
+                  value={formData.contactSource}
+                  onChange={handleChange}
+                  className="w-full text-sm p-1 rounded border hover:border-[#f29d29] focus:outline focus:outline-[#f29d29] bg-white"
+                >
+                  <option value="">Select a Contact</option>
+                  {contact.map((contact, index) => (
+                    <option key={index} value={contact.ID}>
+                      {contact.Name}
+                    </option>
+                  ))}
+                </select>
+              </div>
           
           <div className="bg-gray-50 p-2 rounded md:col-span-2">
             <label className="block text-xs font-medium text-gray-700 mb-1">Billing Address</label>

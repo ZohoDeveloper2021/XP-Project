@@ -33,20 +33,19 @@ const LeadDetailsPage = ({
   }, [lead]);
   console.log("lead Details > ", lead);
 
-  const handleUpdateSuccess = (updatedData) => {
-    if (onLeadUpdated) {
-      onLeadUpdated({
-        ...lead,
-        ...updatedData,
-        Lead_Source: updatedData.Lead_Source || lead.Lead_Source,
-        Profile: updatedData.Profile || lead.Profile,
-        Stack: updatedData.Stack || lead.Stack,
-        Industry: updatedData.Industry || lead.Industry,
-      });
-    }
-    setShowEditForm(false);
-    // toast.success('Lead updated successfully!');
-  };
+    const handleUpdateSuccess = (updatedData) => {
+        if (onLeadUpdated) {
+          onLeadUpdated({
+            ...lead,
+            ...updatedData,
+            Lead_Source: updatedData.Lead_Source || lead.Lead_Source,
+            Profile: updatedData.Profile || lead.Profile,
+            Stack: updatedData.Stack || lead.Stack,
+            Industry: updatedData.Industry || lead.Industry
+          });
+        }
+        setShowEditForm(false);
+      };
 
   // Helper functions
   const getLeadName = () => {
@@ -251,10 +250,7 @@ const LeadDetailsPage = ({
                 <h3 className="text-lg font-medium text-[#f29d29] border-b border-[#f29d29] pb-1">
                   Additional Information
                 </h3>
-                <DetailItem
-                  label="Industry"
-                  value={lead.Industry.Profile_Name || "N/A"}
-                />
+                <DetailItem label="Industry" value={lead.Industry.Profile_Name || lead.Industry.zc_display_value || 'N/A'} />
                 <DetailItem label="Lead Owner" value={getLeadOwner()} />
                 <DetailItem
                   label="Created Date"

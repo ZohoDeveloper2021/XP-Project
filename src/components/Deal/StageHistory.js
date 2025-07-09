@@ -134,7 +134,7 @@ console.log(selectedStage)
               {/* Basic info */}
               <div className="p-3 border rounded-lg">
                 <p><strong>Stage:</strong> {selectedStage.Stage_Name}</p>
-                <p><strong>Modified Time:</strong> {formatDateTime(selectedStage.Modified_Time)}</p>
+                <p><strong>Modified Time:</strong> {formatDateTime(selectedStage.Modified_Time || selectedStage.Added_Time) }</p>
                 <p><strong>Modified By:</strong> {stageDetails.User?.zc_display_value || 'N/A'}</p>
               </div>
 
@@ -205,7 +205,7 @@ console.log(selectedStage)
                   </button>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatDateTime(history.Modified_Time)}
+                  {formatDateTime(history.Modified_Time || history.Added_Time)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {history.User?.zc_display_value || 'N/A'}
