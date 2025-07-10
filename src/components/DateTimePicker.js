@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { format, addMinutes } from "date-fns";
 
 const DateTimePicker = ({ 
@@ -25,6 +25,17 @@ const DateTimePicker = ({
 
   const [currentMonth, setCurrentMonth] = useState(tempDate.getMonth());
   const [currentYear, setCurrentYear] = useState(tempDate.getFullYear());
+
+
+  useEffect(() => {
+  if (date && time) {
+    const [hours, minutes] = time.split(":").map(Number);
+    const newTemp = new Date(date);
+    newTemp.setHours(hours, minutes);
+    setTempDate(newTemp);
+  }
+}, [date, time]);
+
 
   const handleDateSelect = (selectedDate) => {
     if (selectedDate) {

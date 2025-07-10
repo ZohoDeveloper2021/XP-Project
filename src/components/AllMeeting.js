@@ -25,6 +25,9 @@ const AllMeeting = (RecordId) => {
   const [hasFetched, setHasFetched] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false); // New state for update loading
 
+
+  
+
   const fetchMeetings = async () => {
     try {
       setLoading(true);
@@ -524,6 +527,39 @@ console.log(selectedMeeting)
     );
   }
 
+
+  
+
+
+  const handleEditStartDateTimeChange = (date, time) => {
+  const updatedStartDate = date || formData.startDate;
+  const updatedStartTime = time || formData.time;
+
+  // Combine date & time
+  const [hours, minutes] = updatedStartTime.split(":").map(Number);
+  const fullStartDateTime = new Date(updatedStartDate);
+  fullStartDateTime.setHours(hours, minutes);
+
+  // +30 mins for end datetime
+  const newEndDateTime = new Date(fullStartDateTime.getTime() + 30 * 60 * 1000);
+
+  // Update formData
+  setFormData((prev) => ({
+    ...prev,
+    startDate: updatedStartDate,
+    time: updatedStartTime,
+    endDate: newEndDateTime,
+    endTime: newEndDateTime.toTimeString().slice(0, 5),
+  }));
+
+  setSelectedDate(updatedStartDate);
+  setSelectedEndDate(newEndDateTime);
+
+  console.log("Edited Start DateTime:", fullStartDateTime);
+  console.log("Edited End DateTime:", newEndDateTime);
+};
+
+
   return (
     <>
       {/* <Toaster position="top-center" toastOptions={{ duration: 2000 }} /> */}
@@ -921,13 +957,8 @@ console.log(selectedMeeting)
                           label="Start Date & Time"
                           date={formData.startDate}
                           time={formData.time}
-                          onDateChange={(date) => {
-                            setSelectedDate(date); // Add this
-                            setFormData((prev) => ({ ...prev, startDate: date }));
-                          }}
-                          onTimeChange={(time) =>
-                            setFormData((prev) => ({ ...prev, time: time }))
-                          }
+                          onDateChange={(date) => handleEditStartDateTimeChange(date, formData.time)}
+                         onTimeChange={(time) => handleEditStartDateTimeChange(formData.startDate, time)}
                           onStartTimeChange={(endTime) => {
                             setSelectedEndDate(endTime); // Add this
                             setFormData((prev) => ({

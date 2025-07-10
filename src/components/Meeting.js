@@ -76,14 +76,36 @@ const Meeting = ({
       endTime: format(endDateTime, "HH:mm"),
     };
   };
-  const handleStartDateTimeChange = (newDate, newTime) => {
-    const newEndValues = updateEndTime(newDate, newTime);
+  const handleStartDateTimeChange = (date, time) => {
+    const updatedStartDate = date || formData.startDate;
+    const updatedStartTime = time || formData.startTime;
+
+    // Combine start date and time
+    const [hours, minutes] = updatedStartTime.split(":").map(Number);
+    const fullStartDateTime = new Date(updatedStartDate);
+    fullStartDateTime.setHours(hours, minutes);
+
+    // Add 30 minutes for end time
+    const newEndDateTime = new Date(
+      fullStartDateTime.getTime() + 30 * 60 * 1000
+    );
+
+    // Format end date and time
+    const endDate = new Date(newEndDateTime);
+    endDate.setHours(0, 0, 0, 0); // remove time part
+    const endTime = newEndDateTime.toTimeString().slice(0, 5); // format: HH:mm
+
+    // Update both start and end in formData
     setFormData((prev) => ({
       ...prev,
-      startDate: newDate,
-      startTime: newTime,
-      ...newEndValues,
+      startDate: updatedStartDate,
+      startTime: updatedStartTime,
+      endDate,
     }));
+
+    // ✅ Console log to confirm
+    console.log("Start DateTime:", fullStartDateTime);
+    console.log("End DateTime (+30 mins):", newEndDateTime);
   };
 
   // Toast component
