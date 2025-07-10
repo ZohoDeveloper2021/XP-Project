@@ -282,6 +282,9 @@ const AllMeeting = (RecordId) => {
     const startTime = extractTimeFromDateTime(meeting.Schedule_Date_Time);
     const endTime = extractTimeFromDateTime(meeting.Meeting_End_Time);
 
+    setSelectedDate(meetingStartDate);  // Add this
+  setSelectedEndDate(meetingEndDate); 
+
     setFormData({
       startDate: meetingStartDate,
       endDate: meetingEndDate,
@@ -458,101 +461,58 @@ const AllMeeting = (RecordId) => {
   };
 
   const handleFormSubmit = async () => {
-    // Validate all required fields
-    if (
-      !formData.updateReason?.trim() ||
-      !formData.startDate ||
-      !formData.time
-    ) {
-      setFormData((prev) => ({ ...prev, submitAttempted: true }));
-      toast.error("Please fill all required fields");
-      return;
-    }
+    
+    if (selectedDate && formData.time && selectedEndDate && formData.endTime && formData.updateReason) {
+      console.log('Form Data');
+      const startDateTime = formatDateTimeForAPI(selectedDate, formData.time);
+      const endDateTime = formatDateTimeForAPI(selectedEndDate, formData.endTime);
+      const startDateTimeISO = formatDateTime(selectedDate, formData.time);
+      const endDateTimeISO = formatDateTime(selectedEndDate, formData.endTime);
 
-    setIsUpdating(true);
-
-    try {
-      // Calculate start and end datetimes
-      const [hours, minutes] = formData.time.split(":");
-      const startDate = new Date(formData.startDate);
-      startDate.setHours(parseInt(hours, 10));
-      startDate.setMinutes(parseInt(minutes, 10));
-
-      // Calculate end time (30 minutes after start time by default)
-      const endDate = new Date(startDate);
-      endDate.setMinutes(endDate.getMinutes() + 30);
-
-      // Format dates for Zoho API
-      const startDateTime = formatDateTimeForAPI(
-        formData.startDate,
-        formData.time
-      );
-      const endDateTime = formatDateTimeForAPI(
-        endDate,
-        formData.endTime || format(endDate, "HH:mm")
-      );
-
-      // Prepare payload for Zoho Creator update
-      const updateConfig = {
-        app_name: "lead-management-system",
-        report_name: "All_Meetings_Dev",
-        id: selectedMeeting.ID,
-        payload: {
-          data: {
-            Schedule_Date_Time: startDateTime,
-            Meeting_End_Time: endDateTime,
-            Reason_For_Time_Change: formData.updateReason.trim(),
-          },
-        },
-      };
-
-      // First update in Zoho Creator
-      await ZOHO.CREATOR.DATA.updateRecordById(updateConfig);
-
-      // Prepare payload for Zoho Cliq update
-      const cliqPayload = {
-        clientName: selectedMeeting.Client_Name
-          ? `Meeting: ${selectedMeeting.Client_Name}`
-          : "",
-        startDateTime: startDateTime,
-        startEpochMs: startDate.getTime(),
+      const newStart = new Date(new Date(startDateTimeISO).getTime());
+      const newEnd = new Date(new Date(endDateTimeISO).getTime());
+console.log("startDateTime", startDateTime)
+console.log("endDateTime", endDateTime)
+console.log(selectedMeeting)
+      const payload = {
+        clientName: selectedMeeting.Client_Name ? `Meeting: ${selectedMeeting.Client_Name}` :"",
+        startDateTime: startDateTime, 
+        startEpochMs: newStart.getTime(),
         endDateTime: endDateTime,
-        endEpochMs: endDate.getTime(),
+        endEpochMs: newEnd.getTime(),
         eventId: selectedMeeting.Meeting_Id,
         recordId: RecordId.RecordId,
         module: selectedMeeting.Module,
         createCheck: false,
-        reason: formData.updateReason.trim(),
-        source: selectedMeeting.Source?.ID || "",
-        recordingLink: selectedMeeting.Meeting_Recording_Link?.value || "",
-        description: selectedMeeting.Description || "",
+        reason: formData.updateReason,
+        source: selectedMeeting.Source?.ID || '',
+        recordingLink: selectedMeeting.Meeting_Recording_Link?.value || '',
+        description: selectedMeeting.Description || '',
         title: selectedMeeting.Meeting_Title,
         chat_id: selectedMeeting.Cliq_Chat_Id,
-        calendar_id: selectedMeeting.Calender_ID,
+        calendar_id: selectedMeeting.Calender_ID
       };
 
-      // Then update in Cliq
-      const cliqConfig = {
-        api_name: "Create_and_Update_Meeting_in_Zoho_Cliq",
-        http_method: "POST",
-        public_key: "4t6zK8jWk5KC0THFu4XPkykS2",
-        payload: cliqPayload,
-      };
-
-      const response = await ZOHO.CREATOR.DATA.invokeCustomApi(cliqConfig);
-
-      if (response && !response.error) {
-        toast.success("Meeting updated successfully!");
-        setShowForm(false);
-        fetchMeetings(); // Refresh the meetings list
-      } else {
-        throw new Error(response?.error || "Failed to update meeting in Cliq");
-      }
-    } catch (error) {
-      console.error("Error updating meeting:", error);
-      toast.error(error.message || "Failed to update meeting");
-    } finally {
+      console.log('Payload with formatted datetime:', payload);
+      setIsUpdating(true);
+      try {
+        const config = {
+          api_name: 'Create_and_Update_Meeting_in_Zoho_Cliq',
+          http_method: 'POST',
+          public_key: '4t6zK8jWk5KC0THFu4XPkykS2',
+          payload
+        };
+        const response = await ZOHO.CREATOR.DATA.invokeCustomApi(config);
+        console.log(response)
+        if (response) {
+          setShowForm(false);
+          fetchMeetings();
+        }
+      } catch (err) {
+        console.error('Error updating meeting:', err);
+      } finally {
       setIsUpdating(false);
+    }
     }
   };
 
@@ -958,42 +918,45 @@ const AllMeeting = (RecordId) => {
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <DTPicker
-                        label="Start Date & Time"
-                        date={formData.startDate}
-                        time={formData.startTime}
-                        onDateChange={(date) =>
-                          setFormData((prev) => ({ ...prev, startDate: date }))
-                        }
-                        onTimeChange={(time) =>
-                          setFormData((prev) => ({ ...prev, startTime: time }))
-                        }
-                        onStartTimeChange={(endTime) => {
-                          setFormData((prev) => ({
-                            ...prev,
-                            endDate: endTime,
-                            endTime: format(endTime, "HH:mm"),
-                          }));
-                        }}
-                        isStartDateTime={true}
-                        required
-                      />
+                          label="Start Date & Time"
+                          date={formData.startDate}
+                          time={formData.time}
+                          onDateChange={(date) => {
+                            setSelectedDate(date); // Add this
+                            setFormData((prev) => ({ ...prev, startDate: date }));
+                          }}
+                          onTimeChange={(time) =>
+                            setFormData((prev) => ({ ...prev, time: time }))
+                          }
+                          onStartTimeChange={(endTime) => {
+                            setSelectedEndDate(endTime); // Add this
+                            setFormData((prev) => ({
+                              ...prev,
+                              endDate: endTime,
+                              endTime: format(endTime, "HH:mm"),
+                            }));
+                          }}
+                          isStartDateTime={true}
+                          required
+                        />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <DTPicker
-                        label="End Date & Time"
-                        date={formData.endDate}
-                        time={formData.endTime}
-                        onDateChange={(date) =>
-                          setFormData((prev) => ({ ...prev, endDate: date }))
-                        }
-                        onTimeChange={(time) =>
-                          setFormData((prev) => ({ ...prev, endTime: time }))
-                        }
-                        required
-                      />
+                          label="End Date & Time"
+                          date={formData.endDate}
+                          time={formData.endTime}
+                          onDateChange={(date) => {
+                            setSelectedEndDate(date); // Add this
+                            setFormData((prev) => ({ ...prev, endDate: date }));
+                          }}
+                          onTimeChange={(time) =>
+                            setFormData((prev) => ({ ...prev, endTime: time }))
+                          }
+                          required
+                        />
                     </div>
                   </div>
 

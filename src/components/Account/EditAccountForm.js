@@ -179,60 +179,178 @@ const EditAccountForm = ({ account, onClose, onUpdateSuccess }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!account || !account.ID) return;
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if (!account || !account.ID) return;
 
-    setIsSubmitting(true);
-    setSubmitError(null);
+  //   setIsSubmitting(true);
+  //   setSubmitError(null);
 
-    try {
-      const config = {
-        app_name: 'lead-management-system',
-        report_name: 'All_Accounts_Dev',
-        id: account.ID,
-        payload: {
-          data: {
-            Account_Name: formData.accountName || '',
-            Rating: formData.rating || '',
-            Website: { value: '', url: formData.website || '' },
-            Billing_Address: {
-              address_line_1: formData.billingAddressLine1 || '',
-              address_line_2: formData.billingAddressLine2 || '',
-              district_city: formData.city || '',
-              state_province: formData.state || '',
-              postal_code: formData.postalCode || '',
-              country: formData.country || ''
-            },
-            Employees: formData.employees || '',
-            Industry: formData.industry || '',
-            Account_Source: formData.accountSource || ''
-          }
+  //   try {
+  //     const config = {
+  //       app_name: 'lead-management-system',
+  //       report_name: 'All_Accounts_Dev',
+  //       id: account.ID,
+  //       payload: {
+  //         data: {
+  //           Account_Name: formData.accountName || '',
+  //           Rating: formData.rating || '',
+  //           Website: { value: '', url: formData.website || '' },
+  //           Billing_Address: {
+  //             address_line_1: formData.billingAddressLine1 || '',
+  //             address_line_2: formData.billingAddressLine2 || '',
+  //             district_city: formData.city || '',
+  //             state_province: formData.state || '',
+  //             postal_code: formData.postalCode || '',
+  //             country: formData.country || ''
+  //           },
+  //           Employees: formData.employees || '',
+  //           Industry: formData.industry || '',
+  //           Account_Source: formData.accountSource || ''
+  //         }
+  //       }
+  //     };
+
+  //     const response = await ZOHO.CREATOR.DATA.updateRecordById(config);
+      
+  //     if (response.code === 3000) {
+  //       // Upload new attachments if any
+  //       if (selectedFiles.length > 0) {
+  //         await uploadAttachments(account.ID);
+  //       }
+        
+  //       toast.success('Account updated successfully');
+  //       if (onUpdateSuccess) onUpdateSuccess();
+  //       onClose();
+  //     } else {
+  //       throw new Error(response.message || 'Failed to update account');
+  //     }
+  //   } catch (err) {
+  //     console.error('Error updating account:', err);
+  //     setSubmitError(err.message || 'Failed to update account. Please try again.');
+  //     toast.error(`Error: ${err.message || 'Failed to update account'}`);
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!account || !account.ID) return;
+
+  setIsSubmitting(true);
+  setSubmitError(null);
+
+  try {
+    // Prepare the update payload
+    const updatePayload = {
+      app_name: 'lead-management-system',
+      report_name: 'All_Accounts_Dev',
+      id: account.ID,
+      payload: {
+        data: {
+          Account_Name: formData.accountName || '',
+          Rating: formData.rating || '',
+          Website: { value: '', url: formData.website || '' },
+          Billing_Address: {
+            address_line_1: formData.billingAddressLine1 || '',
+            address_line_2: formData.billingAddressLine2 || '',
+            district_city: formData.city || '',
+            state_province: formData.state || '',
+            postal_code: formData.postalCode || '',
+            country: formData.country || ''
+          },
+          Employees: formData.employees || '',
+          Industry: formData.industry || '',
+          Account_Source: formData.accountSource || ''
         }
+      }
+    };
+
+    // 1. First update the account record
+    const updateResponse = await ZOHO.CREATOR.DATA.updateRecordById(updatePayload);
+    
+    if (updateResponse.code !== 3000) {
+      throw new Error(updateResponse.message || 'Failed to update account');
+    }
+
+    // 2. Upload new attachments if any
+    if (selectedFiles.length > 0) {
+      await uploadAttachments(account.ID);
+    }
+
+    // 3. Get the fully updated record with all relationships
+    const fetchConfig = {
+      app_name: 'lead-management-system',
+      report_name: 'All_Accounts_Dev',
+      id: account.ID,
+      criteria: `ID == "${account.ID}"`,
+      // Add these parameters to ensure consistent data structure
+      parameters: {
+        raw: 'true',
+        isbulk: 'false'
+      }
+    };
+
+    const fetchResponse = await ZOHO.CREATOR.DATA.getRecordById(fetchConfig);
+    
+    if (fetchResponse.code === 3000) {
+      const updatedAccount = fetchResponse.data;
+      
+      // Format the data to match exactly what AccountDetailsPage expects
+      const formattedAccount = {
+        ...updatedAccount,
+        // Ensure consistent structure for all fields
+        Account_Name: updatedAccount.Account_Name || '',
+        Rating: updatedAccount.Rating || '',
+        Website: updatedAccount.Website || { url: '', value: '' },
+        Billing_Address: updatedAccount.Billing_Address || {
+          address_line_1: '',
+          address_line_2: '',
+          district_city: '',
+          state_province: '',
+          postal_code: '',
+          country: ''
+        },
+        Employees: updatedAccount.Employees || '',
+        // Handle both string ID and object formats
+        Industry: typeof updatedAccount.Industry === 'string' ? 
+          { 
+            ID: updatedAccount.Industry,
+            zc_display_value: industry.find(i => i.ID === updatedAccount.Industry)?.Industry_Name || ''
+          } : 
+          {
+            ...updatedAccount.Industry,
+            zc_display_value: updatedAccount.Industry?.Industry_Name || ''
+          },
+        Account_Source: typeof updatedAccount.Account_Source === 'string' ? 
+          { 
+            ID: updatedAccount.Account_Source,
+            zc_display_value: sources.find(s => s.ID === updatedAccount.Account_Source)?.Source_Name || ''
+          } : 
+          {
+            ...updatedAccount.Account_Source,
+            zc_display_value: updatedAccount.Account_Source?.Source_Name || ''
+          }
       };
 
-      const response = await ZOHO.CREATOR.DATA.updateRecordById(config);
-      
-      if (response.code === 3000) {
-        // Upload new attachments if any
-        if (selectedFiles.length > 0) {
-          await uploadAttachments(account.ID);
-        }
-        
-        toast.success('Account updated successfully');
-        if (onUpdateSuccess) onUpdateSuccess();
-        onClose();
-      } else {
-        throw new Error(response.message || 'Failed to update account');
+      // 4. Call the success handler with the properly formatted data
+      if (onUpdateSuccess) {
+        onUpdateSuccess(formattedAccount);
       }
-    } catch (err) {
-      console.error('Error updating account:', err);
-      setSubmitError(err.message || 'Failed to update account. Please try again.');
-      toast.error(`Error: ${err.message || 'Failed to update account'}`);
-    } finally {
-      setIsSubmitting(false);
+
+      toast.success('Account updated successfully');
+      onClose();
+    } else {
+      throw new Error("Failed to fetch updated account data");
     }
-  };
+  } catch (err) {
+    console.error('Error updating account:', err);
+    setSubmitError(err.message || 'Failed to update account. Please try again.');
+    toast.error(`Error: ${err.message || 'Failed to update account'}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 overflow-y-auto">

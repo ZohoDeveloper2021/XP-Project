@@ -334,70 +334,166 @@ const EditLeadForm = ({ lead, onClose, onUpdateSuccess, userId }) => {
     }
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setIsSubmitting(true);
+  //   setFieldErrors({});
+
+  //   if (!validateForm()) {
+  //     setIsSubmitting(false);
+  //     return;
+  //   }
+
+  //   try {
+  //     // First update the lead
+  //     const payloadData = {
+  //       Name: formData.leadName || "",
+  //       Email: formData.email || "",
+  //       Phone_Number: formData.phone || "",
+  //       Company: formData.company || "",
+  //       Lead_Status: formData.leadStatus || "",
+  //       Lead_Source: formData.leadSource || "",
+  //       Rating: formData.rating || "",
+  //       Industry: formData.industry || "",
+  //       Website: { value: "", url: formData.website || "" },
+  //       Job_Description: formData.jobDescription || "",
+  //       Job_Title: formData.jobTitle || "",
+  //       No_of_Connects: formData.noOfConnects || "",
+  //       Job_Link: { value: "", url: formData.jobLink || "" },
+  //       Profile: formData.selectProfile || "",
+  //       Stack: formData.jobStack || "",
+  //       Lead_Owner: userId,
+  //     };
+
+  //     const config = {
+  //       app_name: "lead-management-system",
+  //       report_name: "All_Leads_Dev",
+  //       id: lead.ID,
+  //       payload: {
+  //         data: payloadData,
+  //       },
+  //     };
+
+  //     const response = await ZOHO.CREATOR.DATA.updateRecordById(config);
+
+  //     if (response.code === 3000) {
+  //       // Upload new attachments if any
+  //       if (selectedFiles.length > 0) {
+  //         await uploadAttachments(lead.ID);
+  //       }
+
+  //       const updatedLead = {
+  //         ...lead,
+  //         ...payloadData,
+  //         // Include related record display values
+  //         Lead_Source:
+  //           sources.find((s) => s.ID === formData.leadSource) ||
+  //           lead.Lead_Source,
+  //         Profile:
+  //           profile.find((p) => p.ID === formData.selectProfile) ||
+  //           lead.Profile,
+  //         Stack: job.find((j) => j.ID === formData.jobStack) || lead.Stack,
+  //         Industry:
+  //           industry.find((i) => i.ID === formData.industry) || lead.Industry,
+  //       };
+  //        console.log("Updated Lead:", updatedLead);
+  //       // Call the success handler
+  //       if (onUpdateSuccess) {
+  //         onUpdateSuccess(updatedLead);
+  //       }
+
+  //       toast.success("Lead updated successfully!");
+  //       onClose();
+  //     } else {
+  //       throw new Error(response.message || "Failed to update lead");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error updating lead:", error);
+  //     toast.error(`Error: ${error.message || "Failed to update lead"}`);
+  //     setFieldErrors({ form: error.message || "Failed to update lead" });
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setFieldErrors({});
+  e.preventDefault();
+  setIsSubmitting(true);
+  setFieldErrors({});
 
-    if (!validateForm()) {
-      setIsSubmitting(false);
-      return;
-    }
+  if (!validateForm()) {
+    setIsSubmitting(false);
+    return;
+  }
 
-    try {
-      // First update the lead
-      const payloadData = {
-        Name: formData.leadName || "",
-        Email: formData.email || "",
-        Phone_Number: formData.phone || "",
-        Company: formData.company || "",
-        Lead_Status: formData.leadStatus || "",
-        Lead_Source: formData.leadSource || "",
-        Rating: formData.rating || "",
-        Industry: formData.industry || "",
-        Website: { value: "", url: formData.website || "" },
-        Job_Description: formData.jobDescription || "",
-        Job_Title: formData.jobTitle || "",
-        No_of_Connects: formData.noOfConnects || "",
-        Job_Link: { value: "", url: formData.jobLink || "" },
-        Profile: formData.selectProfile || "",
-        Stack: formData.jobStack || "",
-        Lead_Owner: userId,
-      };
+  try {
+    // First update the lead
+    const payloadData = {
+      Name: formData.leadName || "",
+      Email: formData.email || "",
+      Phone_Number: formData.phone || "",
+      Company: formData.company || "",
+      Lead_Status: formData.leadStatus || "",
+      Lead_Source: formData.leadSource || "",
+      Rating: formData.rating || "",
+      Industry: formData.industry || "",
+      Website: { value: "", url: formData.website || "" },
+      Job_Description: formData.jobDescription || "",
+      Job_Title: formData.jobTitle || "",
+      No_of_Connects: formData.noOfConnects || "",
+      Job_Link: { value: "", url: formData.jobLink || "" },
+      Profile: formData.selectProfile || "",
+      Stack: formData.jobStack || "",
+      Lead_Owner: userId,
+    };
 
-      const config = {
+    const config = {
+      app_name: "lead-management-system",
+      report_name: "All_Leads_Dev",
+      id: lead.ID,
+      payload: {
+        data: payloadData,
+      },
+    };
+
+    const response = await ZOHO.CREATOR.DATA.updateRecordById(config);
+
+    if (response.code === 3000) {
+      // Upload new attachments if any
+      if (selectedFiles.length > 0) {
+        await uploadAttachments(lead.ID);
+      }
+
+      // Fetch the fully updated lead record with all relationships
+      const updatedLeadResponse = await ZOHO.CREATOR.DATA.getRecordById({
         app_name: "lead-management-system",
         report_name: "All_Leads_Dev",
         id: lead.ID,
-        payload: {
-          data: payloadData,
-        },
-      };
+      });
 
-      const response = await ZOHO.CREATOR.DATA.updateRecordById(config);
-
-      if (response.code === 3000) {
-        // Upload new attachments if any
-        if (selectedFiles.length > 0) {
-          await uploadAttachments(lead.ID);
+      if (updatedLeadResponse.code === 3000) {
+        const updatedLead = updatedLeadResponse.data;
+        
+        // Ensure related records are properly formatted
+        if (typeof updatedLead.Lead_Source === 'string') {
+          updatedLead.Lead_Source = sources.find(s => s.ID === updatedLead.Lead_Source) || 
+                                   { ID: updatedLead.Lead_Source, Source_Name: '' };
+        }
+        if (typeof updatedLead.Profile === 'string') {
+          updatedLead.Profile = profile.find(p => p.ID === updatedLead.Profile) || 
+                               { ID: updatedLead.Profile, Profile_Name: '' };
+        }
+        if (typeof updatedLead.Stack === 'string') {
+          updatedLead.Stack = job.find(j => j.ID === updatedLead.Stack) || 
+                             { ID: updatedLead.Stack, Job_Stack: '' };
+        }
+        if (typeof updatedLead.Industry === 'string') {
+          updatedLead.Industry = industry.find(i => i.ID === updatedLead.Industry) || 
+                                { ID: updatedLead.Industry, Industry_Name: '' };
         }
 
-        const updatedLead = {
-          ...lead,
-          ...payloadData,
-          // Include related record display values
-          Lead_Source:
-            sources.find((s) => s.ID === formData.leadSource) ||
-            lead.Lead_Source,
-          Profile:
-            profile.find((p) => p.ID === formData.selectProfile) ||
-            lead.Profile,
-          Stack: job.find((j) => j.ID === formData.jobStack) || lead.Stack,
-          Industry:
-            industry.find((i) => i.ID === formData.industry) || lead.Industry,
-        };
-
-        // Call the success handler
+        console.log("Updated Lead:", updatedLead);
+        
+        // Call the success handler with the fresh data
         if (onUpdateSuccess) {
           onUpdateSuccess(updatedLead);
         }
@@ -405,17 +501,19 @@ const EditLeadForm = ({ lead, onClose, onUpdateSuccess, userId }) => {
         toast.success("Lead updated successfully!");
         onClose();
       } else {
-        throw new Error(response.message || "Failed to update lead");
+        throw new Error("Failed to fetch updated lead data");
       }
-    } catch (error) {
-      console.error("Error updating lead:", error);
-      toast.error(`Error: ${error.message || "Failed to update lead"}`);
-      setFieldErrors({ form: error.message || "Failed to update lead" });
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      throw new Error(response.message || "Failed to update lead");
     }
-  };
-
+  } catch (error) {
+    console.error("Error updating lead:", error);
+    toast.error(`Error: ${error.message || "Failed to update lead"}`);
+    setFieldErrors({ form: error.message || "Failed to update lead" });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   const selectedSource = sources.find(
     (source) => source.ID === formData.leadSource
   );
