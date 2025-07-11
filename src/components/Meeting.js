@@ -76,37 +76,31 @@ const Meeting = ({
       endTime: format(endDateTime, "HH:mm"),
     };
   };
-  const handleStartDateTimeChange = (date, time) => {
-    const updatedStartDate = date || formData.startDate;
-    const updatedStartTime = time || formData.startTime;
+const handleStartDateTimeChange = (dateTime) => {
+  const fullStartDateTime = new Date(dateTime); // Includes date + time
 
-    // Combine start date and time
-    const [hours, minutes] = updatedStartTime.split(":").map(Number);
-    const fullStartDateTime = new Date(updatedStartDate);
-    fullStartDateTime.setHours(hours, minutes);
+  // Add 30 mins
+  const endDateTime = new Date(fullStartDateTime.getTime() + 30 * 60 * 1000);
 
-    // Add 30 minutes for end time
-    const newEndDateTime = new Date(
-      fullStartDateTime.getTime() + 30 * 60 * 1000
-    );
+  // Strip time from endDate
+  const endDate = new Date(endDateTime);
+  endDate.setHours(0, 0, 0, 0);
 
-    // Format end date and time
-    const endDate = new Date(newEndDateTime);
-    endDate.setHours(0, 0, 0, 0); // remove time part
-    const endTime = newEndDateTime.toTimeString().slice(0, 5); // format: HH:mm
+  const startTime = fullStartDateTime.toTimeString().slice(0, 5); // HH:mm
+  const endTime = endDateTime.toTimeString().slice(0, 5);
 
-    // Update both start and end in formData
-    setFormData((prev) => ({
-      ...prev,
-      startDate: updatedStartDate,
-      startTime: updatedStartTime,
-      endDate,
-    }));
+  setFormData((prev) => ({
+    ...prev,
+    startDate: fullStartDateTime,
+    startTime,
+    endDate,
+    endTime,
+  }));
 
-    // ✅ Console log to confirm
-    console.log("Start DateTime:", fullStartDateTime);
-    console.log("End DateTime (+30 mins):", newEndDateTime);
-  };
+  console.log("Start:", fullStartDateTime);
+  console.log("End (+30min):", endDateTime);
+};
+
 
   // Toast component
   const Toast = ({ message, type, onClose }) => {
@@ -969,17 +963,12 @@ const Meeting = ({
               {/* Start Date & Time */}
               <div className="rounded-lg">
                 <DTPicker
-                  label="Start Date & Time"
-                  date={formData.startDate}
-                  time={formData.startTime}
-                  onDateChange={(date) =>
-                    handleStartDateTimeChange(date, formData.startTime)
-                  }
-                  onTimeChange={(time) =>
-                    handleStartDateTimeChange(formData.startDate, time)
-                  }
-                  required
-                />
+  label="Start Date & Time"
+  date={formData.startDate}
+  onDateChange={(fullDate) => handleStartDateTimeChange(fullDate)}
+  required
+/>
+
               </div>
 
               {/* End Date & Time (Read-Only) */}

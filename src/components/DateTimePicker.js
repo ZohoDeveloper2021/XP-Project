@@ -1,12 +1,11 @@
 import React, { useState,useEffect } from "react";
 import { format, addMinutes } from "date-fns";
 
-const DateTimePicker = ({ 
-  date, 
-  time, 
-  onDateChange, 
-  onTimeChange,
+const DateTimePicker = ({
+  date,
   label,
+  onDateChange,
+  time,
   required = false,
   disabled = false
 }) => {
@@ -70,17 +69,11 @@ const DateTimePicker = ({
     setTempDate(newDate);
   };
 
-  const handleSave = () => {
-    const dateOnly = new Date(tempDate);
-    dateOnly.setHours(0, 0, 0, 0);
-    
-    const timeString = format(tempDate, "HH:mm");
-    
-    onDateChange && onDateChange(dateOnly);
-    onTimeChange && onTimeChange(timeString);
-    
-    setShowPicker(false);
-  };
+const handleSave = () => {
+  const fullDateTime = new Date(tempDate); // includes selected date + time
+  onDateChange && onDateChange(fullDateTime); // just one combined value
+  setShowPicker(false);
+};
 
   const handlePrevMonth = () => {
     setCurrentMonth(prev => {
